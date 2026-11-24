@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Prova foto posturali</title>
 <style>
   :root { --ink:#1f2328; --muted:#5b6068; --line:#e3e0d8; --bg:#fbfaf7; --teal:#0f6e56; --teal-bg:#e1f5ee; --coral:#b5532b; --coral-bg:#faece7; --amber:#8a5a00; --amber-bg:#fdf3dc; }
@@ -13,14 +13,17 @@
   h2 { font-size: 19px; margin: 0 0 10px; }
   .sub { color: var(--muted); margin: 0 0 18px; }
   .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:14px; }
-  .views { display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; }
-  .views button { padding:12px 4px; border-radius:12px; border:1.5px solid var(--line); background:#fff; font-size:15px; font-weight:600; color:var(--ink); }
-  .views button.on { border-color: var(--teal); background: var(--teal-bg); color:#085041; }
+  .views, .cams { display:grid; gap:8px; }
+  .views { grid-template-columns: repeat(4, 1fr); }
+  .cams { grid-template-columns: 1fr 1fr; }
+  .views button, .cams button { padding:12px 6px; border-radius:12px; border:1.5px solid var(--line); background:#fff; font-size:15px; font-weight:600; color:var(--ink); line-height:1.25; }
+  .cams button small { display:block; font-weight:400; color:var(--muted); font-size:13px; margin-top:3px; }
+  .views button.on, .cams button.on { border-color: var(--teal); background: var(--teal-bg); color:#085041; }
   ol { margin: 0; padding-left: 22px; }
   ol li { margin-bottom: 6px; }
   .row { display:flex; gap:10px; flex-wrap:wrap; }
-  .btn { flex:1; min-width: 150px; display:inline-flex; align-items:center; justify-content:center; padding:15px 14px; border-radius:14px; font-size:17px; font-weight:700; border:none; background: var(--teal); color:#fff; cursor:pointer; text-align:center; }
-  .btn.sec { background:#fff; color: var(--ink); border:1.5px solid var(--line); }
+  .btn { flex:1; min-width: 150px; display:inline-flex; align-items:center; justify-content:center; padding:16px 14px; border-radius:14px; font-size:18px; font-weight:700; border:none; background: var(--teal); color:#fff; cursor:pointer; text-align:center; }
+  .btn.sec { background:#fff; color: var(--ink); border:1.5px solid var(--line); font-size:16px; }
   .btn input { display:none; }
   .status { padding:12px 14px; border-radius:12px; font-weight:600; margin-top:12px; }
   .ok { background: var(--teal-bg); color:#085041; }
@@ -30,19 +33,34 @@
   .checks li { display:flex; gap:10px; padding:8px 0; border-top:1px solid #f0eee8; font-size:16px; }
   .checks li:first-child { border-top:none; }
   .dot { flex:0 0 22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; margin-top:1px; }
-  .dot.g { background:#1d9e75; } .dot.r { background:#d85a30; } .dot.y { background:#e0a100; }
+  .dot.g { background:#1d9e75; } .dot.r { background:#d85a30; }
   #result { width:100%; border-radius:12px; display:none; margin-top:12px; background:#eee; }
   .legend { display:flex; gap:14px; flex-wrap:wrap; font-size:14px; color:var(--muted); margin-top:8px; }
   .legend span::before { content:""; display:inline-block; width:18px; height:4px; border-radius:2px; margin-right:6px; vertical-align:middle; background: var(--c); }
   .note { font-size:14px; color: var(--muted); }
   .toggle { display:flex; align-items:center; gap:10px; font-weight:600; }
   .toggle input { width:22px; height:22px; }
+
+  /* Schermata fotocamera */
+  #camScreen { position:fixed; inset:0; background:#000; z-index:10; display:none; }
+  #camScreen.on { display:block; }
+  #video, #overlay { position:absolute; }
+  #video.mirror { transform: scaleX(-1); }
+  #banner { position:absolute; left:12px; right:12px; top: calc(12px + env(safe-area-inset-top)); padding:14px 16px; border-radius:16px; font-size:20px; font-weight:700; text-align:center; background:rgba(0,0,0,0.65); color:#fff; border:3px solid #d85a30; }
+  #banner.good { border-color:#1d9e75; background:rgba(15,110,86,0.85); }
+  #count { position:absolute; left:0; right:0; top:38%; text-align:center; font-size:120px; font-weight:800; color:#fff; text-shadow:0 4px 20px rgba(0,0,0,0.6); display:none; }
+  #camBar { position:absolute; left:12px; right:12px; bottom: calc(14px + env(safe-area-inset-bottom)); display:flex; gap:10px; }
+  #camBar button { flex:1; padding:14px; border-radius:14px; border:none; font-size:16px; font-weight:700; background:rgba(255,255,255,0.92); color:#1f2328; }
+  #camBar button.shoot { background:#fff; flex:0 0 74px; height:74px; border-radius:50%; border:5px solid rgba(255,255,255,0.5); background-clip: padding-box; }
+  #tilt { position:absolute; right:16px; top:45%; width:22px; height:120px; border-radius:11px; background:rgba(255,255,255,0.25); }
+  #tilt i { position:absolute; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; top:52px; transition: top .1s; }
+  #tilt::after { content:""; position:absolute; left:0; right:0; top:56px; height:8px; background:rgba(29,158,117,0.6); }
 </style>
 </head>
 <body>
 <main>
   <h1>Prova foto posturali</h1>
-  <p class="sub">Pagina di test: guida alla foto, controllo della qualità, volto oscurato, punti e linee di riferimento. Nessun numero, nessuna valutazione: l'interpretazione resta all'osteopata.</p>
+  <p class="sub">Versione 2: la fotocamera si apre dentro la pagina, vedi la sagoma da riempire e la voce ti guida finché sei in posizione. Poi scatta da sola. Nessun numero, nessuna valutazione: l'interpretazione resta all'osteopata.</p>
 
   <div class="card">
     <h2>1. Quale foto?</h2>
@@ -55,19 +73,24 @@
   </div>
 
   <div class="card">
-    <h2>2. Come scattare</h2>
-    <ol id="howto"></ol>
+    <h2>2. Chi scatta?</h2>
+    <div class="cams" id="cams">
+      <button data-c="user" class="on">Da solo<small>telefono appoggiato, fotocamera frontale</small></button>
+      <button data-c="environment">Mi aiuta qualcuno<small>fotocamera posteriore, più nitida</small></button>
+    </div>
+    <ol id="howto" style="margin-top:14px"></ol>
     <div class="row" style="margin-top:12px">
       <label class="toggle"><input type="checkbox" id="voiceOn" checked> Voce guida</label>
-      <button class="btn sec" id="listen" style="flex:0 0 auto; min-width:0">Ascolta le istruzioni</button>
     </div>
   </div>
 
   <div class="card">
-    <h2>3. Scatta o carica</h2>
+    <h2>3. Scatta</h2>
     <div class="row">
-      <label class="btn">Scatta la foto<input type="file" accept="image/*" capture="environment" id="cam"></label>
-      <label class="btn sec">Scegli dalla galleria<input type="file" accept="image/*" id="gal"></label>
+      <button class="btn" id="openCam">Apri la fotocamera</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label class="btn sec">Oppure carica una foto dalla galleria<input type="file" accept="image/*" id="gal"></label>
     </div>
     <div id="status" class="status wait">Carico il modello per riconoscere il corpo...</div>
     <ul class="checks" id="checks"></ul>
@@ -77,88 +100,171 @@
     <h2>4. Risultato</h2>
     <img id="result" alt="Foto con punti e linee di riferimento">
     <div class="legend" id="legend"></div>
-    <p class="note">Per salvarla tieni premuto sull'immagine. La foto resta solo sul tuo telefono: questa pagina non invia nulla.</p>
+    <div class="row" style="margin-top:12px"><button class="btn sec" id="again">Rifai questa foto</button></div>
+    <p class="note">Per salvarla tieni premuto sull'immagine. La foto resta solo sul tuo telefono: questa pagina non invia nulla. Anche col selfie la foto finale non è specchiata: destra e sinistra sono quelle vere.</p>
   </div>
 
-  <p class="note">Limiti della prova: questa pagina non può usare la fotocamera dal vivo né il sensore di inclinazione del telefono, quindi controlla la foto dopo lo scatto. Nell'app vera la voce guiderà durante l'inquadratura e la verticale arriverà dal sensore. I punti sono i centri delle articolazioni stimati dal modello: illustrazione, non misura.</p>
+  <p class="note">Pagina di test. I punti sono i centri delle articolazioni stimati dal modello: illustrazione, non misura. I limiti dei controlli (distanza, luce, inclinazione) sono provvisori e vanno tarati con le prove.</p>
 </main>
+
+<div id="camScreen">
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="overlay"></canvas>
+  <div id="banner">Avvio la fotocamera...</div>
+  <div id="tilt" title="Telefono dritto"><i></i></div>
+  <div id="count"></div>
+  <div id="camBar">
+    <button id="closeCam">Chiudi</button>
+    <button id="repeat">Ripeti</button>
+    <button id="shoot" class="shoot" aria-label="Scatta adesso"></button>
+  </div>
+</div>
 
 <script src="pose.js"></script>
 <script>
 const HOWTO = {
   common: [
-    "Telefono in verticale, dritto, all'altezza del bacino. Se puoi appoggialo a un mobile.",
-    "Distanza di circa 2,5-3 metri: devono vedersi bene la testa e i piedi.",
+    "Telefono in verticale, dritto, all'altezza del bacino. Da solo: appoggialo a un mobile.",
+    "Allontanati finché testa e piedi entrano nella sagoma: di solito 2,5-3 metri.",
     "Abiti aderenti o costume, capelli raccolti, piedi scalzi.",
     "Sfondo semplice e luce davanti a te, non alle tue spalle.",
-    "Stai in piedi come stai di solito: piedi alla larghezza del bacino, braccia rilassate lungo i fianchi, sguardo avanti."
+    "Stai come stai di solito: piedi alla larghezza del bacino, braccia rilassate, sguardo avanti."
   ],
   front: ["Guarda verso il telefono."],
   right: ["Mettiti di profilo con il fianco destro verso il telefono."],
   left: ["Mettiti di profilo con il fianco sinistro verso il telefono."],
-  back: ["Dai le spalle al telefono. Fatti aiutare da qualcuno oppure appoggia il telefono e usa il timer: un selfie di spalle non è affidabile."]
+  back: ["Dai le spalle al telefono. Non vedrai lo schermo: ascolta la voce, scatta da sola quando sei in posizione."]
 };
-const VIEW_NAME = { front:"di fronte", right:"di lato destro", left:"di lato sinistro", back:"di spalle" };
-let view = "front", poseReady = false, pose;
+const VIEW_NAME = { front:"di fronte", right:"di profilo", left:"di profilo", back:"di spalle" };
+const $ = id => document.getElementById(id);
+let view = "front", facing = "user", poseReady = false, pose, onPose = null;
 
 function renderHowto(){
-  const el = document.getElementById("howto");
-  el.innerHTML = "";
+  const el = $("howto"); el.innerHTML = "";
   [...HOWTO[view], ...HOWTO.common].forEach(t => { const li = document.createElement("li"); li.textContent = t; el.appendChild(li); });
 }
 renderHowto();
-document.getElementById("views").addEventListener("click", e => {
+$("views").addEventListener("click", e => {
   const b = e.target.closest("button"); if(!b) return;
   view = b.dataset.v;
   document.querySelectorAll("#views button").forEach(x => x.classList.toggle("on", x === b));
   renderHowto();
 });
+$("cams").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  facing = b.dataset.c;
+  document.querySelectorAll("#cams button").forEach(x => x.classList.toggle("on", x === b));
+});
 
-function say(text){
-  if(!document.getElementById("voiceOn").checked) return;
+// ---------- Voce ----------
+let lastSaid = "", lastSaidAt = 0;
+function say(text, force){
+  if(!$("voiceOn").checked) return;
   try {
     if(!("speechSynthesis" in window)) return;
+    const now = Date.now();
+    if(!force && text === lastSaid && now - lastSaidAt < 6000) return;
+    if(!force && speechSynthesis.speaking && now - lastSaidAt < 2500) return;
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "it-IT"; u.rate = 1;
+    u.lang = "it-IT"; u.rate = 1.05;
     const it = speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith("it"));
     if(it) u.voice = it;
     speechSynthesis.speak(u);
+    lastSaid = text; lastSaidAt = now;
   } catch(e) {}
 }
-document.getElementById("listen").addEventListener("click", () => {
-  say([...HOWTO[view], ...HOWTO.common].join(" "));
-});
 
-function setStatus(cls, text){ const s = document.getElementById("status"); s.className = "status " + cls; s.textContent = text; }
+function setStatus(cls, text){ const s = $("status"); s.className = "status " + cls; s.textContent = text; }
 
+// ---------- Modello ----------
 async function initPose(){
   try {
     pose = new Pose({ locateFile: f => f });
-    pose.setOptions({ modelComplexity: 1, smoothLandmarks: false, enableSegmentation: false, staticImageMode: true, minDetectionConfidence: 0.5 });
+    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, enableSegmentation: false, staticImageMode: false, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    pose.onResults(r => { if(onPose) onPose(r); });
     await pose.initialize();
     poseReady = true;
-    setStatus("ok", "Pronto. Scatta o carica una foto.");
+    setStatus("ok", "Pronto. Tocca \"Apri la fotocamera\".");
   } catch(e) {
     setStatus("ko", "Non riesco a caricare il modello in questo browser: " + (e && e.message ? e.message : e));
   }
 }
 initPose();
+function runPose(image){ return new Promise(res => { onPose = r => { onPose = null; res(r); }; pose.send({ image }); }); }
 
-function loadImage(file){
-  return new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => res(img);
-    img.onerror = rej;
-    img.src = URL.createObjectURL(file);
-  });
+// ---------- Sensore di inclinazione ----------
+let tilt = null; // {beta, gamma}
+function onOrient(e){ if(e.beta == null) return; tilt = { beta: e.beta, gamma: e.gamma }; }
+async function startTilt(){
+  try {
+    if(typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function"){
+      const p = await DeviceOrientationEvent.requestPermission();
+      if(p !== "granted") return;
+    }
+    window.addEventListener("deviceorientation", onOrient);
+  } catch(e) {}
+}
+// Telefono in verticale: beta vicino a 90, gamma vicino a 0
+function tiltIssue(){
+  if(!tilt) return null;
+  const b = tilt.beta, g = tilt.gamma;
+  if(Math.abs(g) > 6) return "Il telefono è storto di lato: raddrizzalo";
+  if(b < 80) return "Il telefono è inclinato all'indietro: mettilo dritto";
+  if(b > 100) return "Il telefono è inclinato in avanti: mettilo dritto";
+  return null;
 }
 
-function runPose(canvas){
-  return new Promise(res => {
-    pose.onResults(r => res(r));
-    pose.send({ image: canvas });
-  });
+// ---------- Controlli ----------
+const P = { nose:0, lEar:7, rEar:8, lSh:11, rSh:12, lHip:23, rHip:24, lKnee:25, rKnee:26, lAnk:27, rAnk:28, lHeel:29, rHeel:30, lToe:31, rToe:32 };
+// Sagoma: testa al 10% dell'altezza, piedi al 90%
+const TARGET = { top: 0.10, bottom: 0.90 };
+
+function geom(lm){
+  const footY = Math.max(lm[P.lHeel].y, lm[P.rHeel].y, lm[P.lToe].y, lm[P.rToe].y);
+  const shY = (lm[P.lSh].y + lm[P.rSh].y) / 2;
+  const headTop = lm[P.nose].y - (shY - lm[P.nose].y) * 1.1;
+  const midX = (lm[P.lHip].x + lm[P.rHip].x) / 2;
+  return { footY, shY, headTop, midX };
+}
+
+// Ritorna un elenco ordinato di problemi (il primo è quello da dire)
+function liveIssues(lm, W, H, light){
+  const out = [];
+  const t = tiltIssue(); if(t) out.push(t);
+  if(!lm) { out.unshift("Non ti vedo: mettiti davanti al telefono, a figura intera"); return out; }
+  const vis = i => (lm[i].visibility ?? 1);
+  const g = geom(lm);
+  const xs = lm.map(p => p.x);
+  if(g.headTop <= 0.01) out.push("La testa è tagliata: fai un passo indietro");
+  else if(vis(P.lAnk) < 0.5 || vis(P.rAnk) < 0.5 || g.footY >= 0.99) out.push("Non vedo i piedi: fai un passo indietro");
+  const frac = g.footY - g.headTop;
+  if(frac < 0.6) out.push("Sei lontano: fai un passo avanti");
+  else if(frac > 0.88) out.push("Sei troppo vicino: fai un passo indietro");
+  if(g.midX < 0.38 || g.midX > 0.62){
+    // x piccola = sinistra dell'immagine = destra di chi guarda il telefono
+    const towardImageRight = g.midX < 0.38;
+    if(view === "front") out.push(towardImageRight ? "Fai un passo alla tua sinistra" : "Fai un passo alla tua destra");
+    else if(view === "back") out.push(towardImageRight ? "Fai un passo alla tua destra" : "Fai un passo alla tua sinistra");
+    else out.push(towardImageRight ? "Spostati un passo verso il centro, dalla parte della tua schiena" : "Spostati un passo verso il centro, dalla parte della tua pancia");
+  }
+  const lateral = view === "right" || view === "left";
+  const shoulderW = Math.abs(lm[P.lSh].x - lm[P.rSh].x) * W / (Math.max(0.1, frac) * H);
+  if(lateral && shoulderW > 0.12) out.push("Ruota di un quarto di giro: mettiti di profilo");
+  else if(!lateral && shoulderW < 0.1) out.push("Sei di profilo: mettiti " + VIEW_NAME[view]);
+  if(lateral){
+    // lato destro verso il telefono: l'orecchio destro è più visibile del sinistro
+    const near = view === "right" ? P.rEar : P.lEar, far = view === "right" ? P.lEar : P.rEar;
+    if(shoulderW <= 0.12 && vis(far) > vis(near) + 0.25) out.push("Hai l'altro fianco verso il telefono: girati dall'altra parte");
+  }
+  if(view === "front" && vis(P.nose) < 0.5) out.push("Sembri di spalle: girati verso il telefono");
+  if(view === "back" && vis(P.nose) > 0.85 && vis(P.lEar) > 0.6 && vis(P.rEar) > 0.6) out.push("Sembri di fronte: dai le spalle al telefono");
+  if(light){
+    if(light.mean < 60) out.push("C'è poca luce: accendi una luce");
+    else if(light.mean > 215) out.push("Troppa luce: spostati dalla finestra");
+    else if(light.body < light.mean - 35) out.push("Sei in controluce: metti la luce davanti a te");
+  }
+  return out;
 }
 
 function lumaStats(ctx, w, h, box){
@@ -180,41 +286,256 @@ function lumaStats(ctx, w, h, box){
   const mean = s / m;
   return { mean: all / n, body: nb ? inB / nb : all / n, sharp: s2 / m - mean * mean };
 }
+function bodyBox(lm, w, h){
+  const xs = lm.map(p => p.x * w), ys = lm.map(p => p.y * h);
+  return { x0: Math.max(0, Math.min(...xs)), x1: Math.min(w, Math.max(...xs)), y0: Math.max(0, Math.min(...ys)), y1: Math.min(h, Math.max(...ys)) };
+}
 
-const P = { nose:0, lEar:7, rEar:8, lSh:11, rSh:12, lHip:23, rHip:24, lKnee:25, rKnee:26, lAnk:27, rAnk:28, lHeel:29, rHeel:30, lToe:31, rToe:32 };
+// ---------- Fotocamera dal vivo ----------
+let stream = null, running = false, busy = false, okSince = 0, counting = false, lastLm = null, prevHip = null, still = 0, wakeLock = null;
+const video = $("video"), overlay = $("overlay"), octx = overlay.getContext("2d");
+const small = document.createElement("canvas"), sctx = small.getContext("2d", { willReadFrequently: true });
+let light = null, lightAt = 0, rect = { x:0, y:0, w:0, h:0 };
 
-function analyse(lm, W, H, stats){
-  const checks = [];
-  const vis = i => (lm[i].visibility ?? 1);
-  const add = (ok, good, bad, warn) => checks.push({ ok, text: ok === true ? good : bad, warn });
-  const feetSeen = vis(P.lAnk) > 0.5 && vis(P.rAnk) > 0.5;
-  const ys = lm.map(p => p.y), xs = lm.map(p => p.x);
-  const footY = Math.max(lm[P.lHeel].y, lm[P.rHeel].y, lm[P.lToe].y, lm[P.rToe].y);
-  const shY = (lm[P.lSh].y + lm[P.rSh].y) / 2;
-  const headTop = lm[P.nose].y - (shY - lm[P.nose].y) * 1.1;
-  const inside = headTop > 0.01 && footY < 0.99 && Math.min(...xs) > 0.01 && Math.max(...xs) < 0.99;
-  add(feetSeen && inside, "Corpo intero nell'inquadratura", headTop <= 0.01 ? "La testa è tagliata: fai un passo indietro" : "I piedi non si vedono bene: fai un passo indietro o abbassa il telefono");
-  const frac = footY - headTop;
-  if(frac < 0.55) add(false, "", "Sei troppo lontano: fai un passo avanti");
-  else if(frac > 0.9) add(false, "", "Sei troppo vicino: fai un passo indietro");
-  else add(true, "Distanza giusta", "");
-  const midX = (lm[P.lHip].x + lm[P.rHip].x) / 2;
-  if(midX < 0.35) add(false, "", "Sei troppo sul lato sinistro della foto: spostati verso il centro");
-  else if(midX > 0.65) add(false, "", "Sei troppo sul lato destro della foto: spostati verso il centro");
-  else add(true, "Ben centrato", "");
-  const shoulderW = Math.abs(lm[P.lSh].x - lm[P.rSh].x) * W / ((footY - headTop) * H);
+function layout(){
+  const vw = video.videoWidth || 720, vh = video.videoHeight || 1280;
+  const sw = window.innerWidth, sh = window.innerHeight;
+  const k = Math.min(sw / vw, sh / vh);
+  rect = { w: vw * k, h: vh * k, x: (sw - vw * k) / 2, y: (sh - vh * k) / 2 };
+  for(const el of [video, overlay]){ el.style.left = rect.x + "px"; el.style.top = rect.y + "px"; el.style.width = rect.w + "px"; el.style.height = rect.h + "px"; }
+  const dpr = window.devicePixelRatio || 1;
+  overlay.width = Math.round(rect.w * dpr); overlay.height = Math.round(rect.h * dpr);
+  octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", () => { if(running) layout(); });
+
+async function openCamera(){
+  if(!poseReady){ setStatus("wait", "Il modello si sta ancora caricando, riprova tra qualche secondo."); return; }
+  say("Apro la fotocamera.", true); // sblocca la voce su iPhone (serve un tocco)
+  await startTilt();
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode: facing, width:{ ideal:1080 }, height:{ ideal:1920 }, aspectRatio:{ ideal: 9/16 } } });
+  } catch(e) {
+    setStatus("ko", "Non ho accesso alla fotocamera. Consenti l'accesso nelle impostazioni del browser e riprova. (" + (e && e.name ? e.name : e) + ")");
+    return;
+  }
+  video.srcObject = stream;
+  video.classList.toggle("mirror", facing === "user");
+  $("camScreen").classList.add("on");
+  document.body.style.overflow = "hidden";
+  try { if("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch(e) {}
+  await video.play().catch(() => {});
+  await new Promise(r => { if(video.videoWidth) r(); else video.onloadedmetadata = () => r(); });
+  layout();
+  pose.setOptions({ staticImageMode: false });
+  running = true; okSince = 0; counting = false; prevHip = null; still = 0;
+  setTimeout(() => say(([...HOWTO[view]].join(" ")) + " Riempi la sagoma con il corpo.", true), 400);
+  loop();
+}
+
+function stopCamera(){
+  running = false; counting = false;
+  if(stream) stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  $("camScreen").classList.remove("on");
+  $("count").style.display = "none";
+  document.body.style.overflow = "";
+  try { if(wakeLock) wakeLock.release(); } catch(e) {}
+  wakeLock = null;
+}
+
+async function loop(){
+  if(!running) return;
+  if(!busy && video.readyState >= 2){
+    busy = true;
+    try {
+      const r = await runPose(video);
+      if(running) onFrame(r.poseLandmarks || null);
+    } catch(e) {}
+    busy = false;
+  }
+  requestAnimationFrame(loop);
+}
+
+function updateLight(lm){
+  const now = Date.now();
+  if(now - lightAt < 600) return;
+  lightAt = now;
+  const vw = video.videoWidth, vh = video.videoHeight, k = 160 / Math.max(vw, vh);
+  small.width = Math.round(vw * k); small.height = Math.round(vh * k);
+  sctx.drawImage(video, 0, 0, small.width, small.height);
+  const box = lm ? bodyBox(lm, small.width, small.height) : null;
+  const d = sctx.getImageData(0, 0, small.width, small.height).data;
+  let all = 0, n = 0, inB = 0, nb = 0;
+  for(let y = 0; y < small.height; y++) for(let x = 0; x < small.width; x++){
+    const i = (y * small.width + x) * 4, L = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+    all += L; n++;
+    if(box && x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1){ inB += L; nb++; }
+  }
+  light = { mean: all / n, body: nb ? inB / nb : all / n };
+}
+
+function onFrame(lm){
+  lastLm = lm;
+  updateLight(lm);
+  const W = video.videoWidth, H = video.videoHeight;
+  const issues = liveIssues(lm, W, H, light);
+  // Immobilità: le anche si muovono poco tra un fotogramma e l'altro
+  if(lm){
+    const hip = { x:(lm[P.lHip].x + lm[P.rHip].x) / 2, y:(lm[P.lHip].y + lm[P.rHip].y) / 2 };
+    if(prevHip){ const mv = Math.hypot(hip.x - prevHip.x, hip.y - prevHip.y); still = mv < 0.006 ? still + 1 : 0; }
+    prevHip = hip;
+  }
+  if(!issues.length && still < 4) issues.push("Resta fermo");
+  const good = issues.length === 0;
+  drawOverlay(lm, good);
+  if(tilt){ const off = Math.max(-50, Math.min(50, (tilt.beta - 90) * 2.5)); $("tilt").firstElementChild.style.top = (52 - off) + "px"; $("tilt").style.display = "block"; } else $("tilt").style.display = "none";
+  const banner = $("banner");
+  if(counting){ if(!good) cancelCount(issues[0]); return; }
+  if(good){
+    banner.textContent = "Perfetto, resta fermo";
+    banner.classList.add("good");
+    if(!okSince) okSince = Date.now();
+    if(Date.now() - okSince > 900) startCount();
+  } else {
+    okSince = 0;
+    banner.textContent = issues[0];
+    banner.classList.remove("good");
+    if(issues[0] !== "Resta fermo") say(issues[0]);
+  }
+}
+
+function startCount(){
+  counting = true;
+  say("Perfetto. Resta fermo. Tre, due, uno.", true);
+  let n = 3; const c = $("count"); c.style.display = "block"; c.textContent = n;
+  const tick = () => {
+    if(!counting) return;
+    n--;
+    if(n > 0){ c.textContent = n; setTimeout(tick, 800); }
+    else { c.textContent = ""; capture(); }
+  };
+  setTimeout(tick, 900);
+}
+function cancelCount(msg){
+  counting = false; okSince = 0;
+  $("count").style.display = "none";
+  $("banner").textContent = msg; $("banner").classList.remove("good");
+  say("Aspetta. " + msg, true);
+}
+
+// Sagoma di riferimento (in coordinate dello schermo)
+function silhouette(ctx, w, h, lateral){
+  const top = TARGET.top * h, bot = TARGET.bottom * h, Hb = bot - top, cx = w / 2;
+  const u = Hb;
+  ctx.beginPath();
+  if(!lateral){
+    ctx.arc(cx, top + 0.065 * u, 0.06 * u, 0, Math.PI * 2);
+    ctx.moveTo(cx - 0.13 * u, top + 0.18 * u);
+    ctx.lineTo(cx + 0.13 * u, top + 0.18 * u);
+    ctx.lineTo(cx + 0.11 * u, top + 0.52 * u);
+    ctx.lineTo(cx + 0.09 * u, bot);
+    ctx.lineTo(cx + 0.02 * u, bot);
+    ctx.lineTo(cx, top + 0.56 * u);
+    ctx.lineTo(cx - 0.02 * u, bot);
+    ctx.lineTo(cx - 0.09 * u, bot);
+    ctx.lineTo(cx - 0.11 * u, top + 0.52 * u);
+    ctx.closePath();
+    ctx.moveTo(cx - 0.135 * u, top + 0.19 * u); ctx.lineTo(cx - 0.16 * u, top + 0.5 * u);
+    ctx.moveTo(cx + 0.135 * u, top + 0.19 * u); ctx.lineTo(cx + 0.16 * u, top + 0.5 * u);
+  } else {
+    ctx.arc(cx, top + 0.065 * u, 0.06 * u, 0, Math.PI * 2);
+    ctx.moveTo(cx - 0.05 * u, top + 0.17 * u);
+    ctx.lineTo(cx + 0.06 * u, top + 0.17 * u);
+    ctx.lineTo(cx + 0.06 * u, top + 0.53 * u);
+    ctx.lineTo(cx + 0.045 * u, bot);
+    ctx.lineTo(cx - 0.035 * u, bot);
+    ctx.lineTo(cx - 0.06 * u, top + 0.53 * u);
+    ctx.closePath();
+  }
+}
+
+function drawOverlay(lm, good){
+  const w = rect.w, h = rect.h;
+  octx.clearRect(0, 0, w, h);
   const lateral = view === "right" || view === "left";
-  if(lateral && shoulderW > 0.12) add(false, "", "Non sembri di profilo: ruota di un quarto di giro");
-  else if(!lateral && shoulderW < 0.1) add(false, "", "Sembri di profilo: mettiti " + VIEW_NAME[view]);
-  else add(true, "Posizione " + VIEW_NAME[view], "");
-  if(view === "front" && vis(P.nose) < 0.5) add(false, "", "Sembri di spalle: girati verso il telefono");
-  if(view === "back" && vis(P.nose) > 0.8 && vis(P.lEar) > 0.6 && vis(P.rEar) > 0.6) add(false, "", "Sembri di fronte: dai le spalle al telefono");
-  if(stats.mean < 60) add(false, "", "Troppo buio: accendi una luce o avvicinati a una finestra");
-  else if(stats.mean > 215) add(false, "", "Troppa luce: la foto è bruciata");
-  else if(stats.body < stats.mean - 35) add(false, "", "Sei in controluce: metti la luce davanti a te");
-  else add(true, "Luce buona", "");
-  add(stats.sharp > 25 ? true : false, "Foto nitida", "La foto è mossa o sfocata: resta fermo e riscatta");
+  // sagoma
+  octx.save();
+  silhouette(octx, w, h, lateral);
+  octx.fillStyle = good ? "rgba(29,158,117,0.18)" : "rgba(255,255,255,0.10)";
+  octx.fill();
+  octx.lineWidth = 3; octx.setLineDash([10, 8]);
+  octx.strokeStyle = good ? "#1d9e75" : "rgba(255,255,255,0.85)";
+  octx.stroke();
+  octx.restore();
+  // linee guida: testa, piedi, centro
+  octx.save(); octx.setLineDash([6, 8]); octx.lineWidth = 2; octx.strokeStyle = "rgba(255,255,255,0.55)";
+  [TARGET.top, TARGET.bottom].forEach(y => { octx.beginPath(); octx.moveTo(w * 0.2, y * h); octx.lineTo(w * 0.8, y * h); octx.stroke(); });
+  octx.beginPath(); octx.moveTo(w / 2, 0); octx.lineTo(w / 2, h); octx.stroke();
+  octx.restore();
+  if(!lm) return;
+  const mirror = facing === "user";
+  const pt = i => ({ x: (mirror ? 1 - lm[i].x : lm[i].x) * w, y: lm[i].y * h });
+  const pairs = [[11,12],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[11,13],[13,15],[12,14],[14,16]];
+  octx.save();
+  octx.strokeStyle = good ? "#1d9e75" : "#f0b400"; octx.lineWidth = 4;
+  pairs.forEach(([a,b]) => { const A = pt(a), B = pt(b); octx.beginPath(); octx.moveTo(A.x, A.y); octx.lineTo(B.x, B.y); octx.stroke(); });
+  [0,11,12,23,24,25,26,27,28].forEach(i => { const p = pt(i); octx.beginPath(); octx.arc(p.x, p.y, 6, 0, Math.PI * 2); octx.fillStyle = "#fff"; octx.fill(); });
+  octx.restore();
+}
+
+async function capture(){
+  counting = false;
+  const W = video.videoWidth, H = video.videoHeight;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  cv.getContext("2d", { willReadFrequently: true }).drawImage(video, 0, 0, W, H);
+  stopCamera();
+  say("Fatto. Controllo la foto.", true);
+  await analyseStill(cv);
+}
+
+// ---------- Analisi della foto ferma ----------
+function finalChecks(lm, W, H, stats){
+  const saved = tilt; tilt = null; // l'inclinazione si controlla solo dal vivo
+  const issues = liveIssues(lm, W, H, stats);
+  tilt = saved;
+  const checks = [];
+  if(!issues.length) checks.push({ ok:true, text:"Corpo intero, distanza, centratura e posizione corretti" });
+  issues.forEach(t => checks.push({ ok:false, text:t }));
+  checks.push(stats.sharp > 25 ? { ok:true, text:"Foto nitida" } : { ok:false, text:"La foto è mossa o sfocata: resta fermo e rifalla" });
+  if(!issues.some(t => /luce/.test(t))) checks.push({ ok:true, text:"Luce buona" });
   return checks;
+}
+
+async function analyseStill(cv){
+  setStatus("wait", "Controllo la foto...");
+  $("checks").innerHTML = ""; $("outCard").style.display = "none";
+  try {
+    const maxSide = 1280, k = Math.min(1, maxSide / Math.max(cv.width, cv.height));
+    const cw = Math.round(cv.width * k), ch = Math.round(cv.height * k);
+    const c2 = document.createElement("canvas"); c2.width = cw; c2.height = ch;
+    c2.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0, cw, ch);
+    pose.setOptions({ staticImageMode: true });
+    const r = await runPose(c2);
+    const lm = r.poseLandmarks;
+    if(!lm){ setStatus("ko", "Non trovo una persona nella foto. Riprova."); say("Non ti vedo nella foto. Riprova.", true); return; }
+    const box = bodyBox(lm, cw, ch);
+    const sk = Math.min(1, 400 / cw);
+    const sc = document.createElement("canvas"); sc.width = Math.round(cw * sk); sc.height = Math.round(ch * sk);
+    const scx = sc.getContext("2d", { willReadFrequently: true }); scx.drawImage(c2, 0, 0, sc.width, sc.height);
+    const stats = lumaStats(scx, sc.width, sc.height, { x0: box.x0 * sk, x1: box.x1 * sk, y0: box.y0 * sk, y1: box.y1 * sk });
+    const checks = finalChecks(lm, cw, ch, stats);
+    const ul = $("checks");
+    checks.forEach(c => { const li = document.createElement("li"); li.innerHTML = '<span class="dot ' + (c.ok ? "g" : "r") + '">' + (c.ok ? "✓" : "!") + '</span><span></span>'; li.lastChild.textContent = c.text; ul.appendChild(li); });
+    const bad = checks.filter(c => !c.ok);
+    if(bad.length){ setStatus("ko", "Da rifare: " + bad[0].text); say(bad[0].text, true); }
+    else { setStatus("ok", "Foto valida."); say("Foto valida. Ecco i punti e le linee di riferimento.", true); }
+    const out = $("result"); out.src = drawResult(c2, lm); out.style.display = "block";
+    $("outCard").style.display = "block";
+    $("outCard").scrollIntoView({ behavior:"smooth" });
+  } catch(e) {
+    setStatus("ko", "Errore nel leggere la foto: " + (e && e.message ? e.message : e));
+  }
 }
 
 function drawResult(img, lm){
@@ -223,7 +544,6 @@ function drawResult(img, lm){
   const ctx = c.getContext("2d");
   ctx.drawImage(img, 0, 0, W, H);
   const pt = i => ({ x: lm[i].x * W, y: lm[i].y * H });
-  // volto oscurato
   const face = [0,1,2,3,4,5,6,7,8,9,10].map(pt);
   const fx0 = Math.min(...face.map(p => p.x)), fx1 = Math.max(...face.map(p => p.x));
   const fy0 = Math.min(...face.map(p => p.y)), fy1 = Math.max(...face.map(p => p.y));
@@ -242,7 +562,7 @@ function drawResult(img, lm){
   const line = (a, b, color, dash) => { ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = lw; if(dash) ctx.setLineDash([lw * 4, lw * 3]); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.restore(); };
   const dot = (p, color) => { ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = lw / 1.5; ctx.strokeStyle = "#fff"; ctx.stroke(); };
   const PLUMB = "#e0a100", BODY = "#1d9e75", LEVEL = "#d85a30", REF = "rgba(255,255,255,0.9)";
-  const legend = document.getElementById("legend");
+  const legend = $("legend");
   const lateral = view === "right" || view === "left";
   if(lateral){
     const s = view === "right" ? { ear:8, sh:12, hip:24, knee:26, ank:28 } : { ear:7, sh:11, hip:23, knee:25, ank:27 };
@@ -271,49 +591,21 @@ function drawResult(img, lm){
   return c.toDataURL("image/jpeg", 0.9);
 }
 
-async function handle(file){
-  if(!file) return;
+// ---------- Pulsanti ----------
+$("openCam").addEventListener("click", openCamera);
+$("again").addEventListener("click", openCamera);
+$("closeCam").addEventListener("click", () => { stopCamera(); setStatus("ok", "Fotocamera chiusa."); });
+$("repeat").addEventListener("click", () => { const t = $("banner").textContent; say(t, true); });
+$("shoot").addEventListener("click", () => { if(running) capture(); });
+$("gal").addEventListener("change", async e => {
+  const f = e.target.files[0]; if(!f) return;
   if(!poseReady){ setStatus("wait", "Il modello si sta ancora caricando, riprova tra qualche secondo."); return; }
-  say("Controllo la foto.");
-  setStatus("wait", "Controllo la foto...");
-  document.getElementById("checks").innerHTML = "";
-  document.getElementById("outCard").style.display = "none";
-  try {
-    const img = await loadImage(file);
-    const maxSide = 1280, k = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
-    const cw = Math.round(img.naturalWidth * k), ch = Math.round(img.naturalHeight * k);
-    const cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
-    const cctx = cv.getContext("2d", { willReadFrequently: true }); cctx.drawImage(img, 0, 0, cw, ch);
-    const r = await runPose(cv);
-    const lm = r.poseLandmarks;
-    if(!lm){ setStatus("ko", "Non trovo una persona nella foto. Riprova seguendo le istruzioni."); say("Non ti vedo nella foto. Riprova seguendo le istruzioni."); return; }
-    const xs = lm.map(p => p.x * cw), ys = lm.map(p => p.y * ch);
-    const box = { x0: Math.max(0, Math.min(...xs)), x1: Math.min(cw, Math.max(...xs)), y0: Math.max(0, Math.min(...ys)), y1: Math.min(ch, Math.max(...ys)) };
-    const sw = 400, sk = Math.min(1, sw / cw), sh = Math.round(ch * sk);
-    const sc = document.createElement("canvas"); sc.width = Math.round(cw * sk); sc.height = sh;
-    const sctx = sc.getContext("2d", { willReadFrequently: true }); sctx.drawImage(cv, 0, 0, sc.width, sc.height);
-    const stats = lumaStats(sctx, sc.width, sc.height, { x0: box.x0 * sk, x1: box.x1 * sk, y0: box.y0 * sk, y1: box.y1 * sk });
-    const checks = analyse(lm, cw, ch, stats);
-    const ul = document.getElementById("checks");
-    checks.forEach(c => { const li = document.createElement("li"); li.innerHTML = '<span class="dot ' + (c.ok ? "g" : "r") + '">' + (c.ok ? "✓" : "!") + '</span><span></span>'; li.lastChild.textContent = c.text; ul.appendChild(li); });
-    const bad = checks.filter(c => !c.ok);
-    if(bad.length){
-      setStatus("ko", "Da rifare: " + bad[0].text);
-      say(bad[0].text);
-    } else {
-      setStatus("ok", "Foto valida.");
-      say("Foto valida. Ecco i punti e le linee di riferimento.");
-    }
-    const out = document.getElementById("result");
-    out.src = drawResult(cv, lm);
-    out.style.display = "block";
-    document.getElementById("outCard").style.display = "block";
-  } catch(e) {
-    setStatus("ko", "Errore nel leggere la foto: " + (e && e.message ? e.message : e));
-  }
-}
-document.getElementById("cam").addEventListener("change", e => handle(e.target.files[0]));
-document.getElementById("gal").addEventListener("change", e => handle(e.target.files[0]));
+  tilt = null;
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(f); });
+  const cv = document.createElement("canvas"); cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+  cv.getContext("2d").drawImage(img, 0, 0);
+  await analyseStill(cv);
+});
 </script>
 </body>
 </html>
